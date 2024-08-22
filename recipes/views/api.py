@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def recipe_api_list(request):
     '''
     # `author_full_name` é um campo virtual criado ao concatenar os campos `author__first_name`, `author__last_name`, e `author__username` do modelo `Recipe`. Isso permite acessá-lo como um campo normal do modelo.
@@ -26,15 +26,22 @@ def recipe_api_list(request):
     
     # `context={'request': request}`: Passa o objeto `request` para o serializer. Isso é útil para serializar campos que dependem do objeto `request`, como URLs absolutas. Como o HyperlinkedRelatedField, que usa o objeto `request` para criar URLs absolutas para os objetos relacionados.
     '''
-    recipes = Recipe.objects.filter(is_published=True).annotate(
-        author_full_name=Concat(
-            F('author__first_name'), Value(' '),
-            F('author__last_name'), Value(' ('),
-            F('author__username'), Value(')'))).order_by('-id').select_related('category', 'author').prefetch_related('tags')[:10]
-    
-    serializer = RecipeSerializer(instance=recipes, many=True, context={'request': request}) 
+    if request.method == 'GET':
+        recipes = Recipe.objects.filter(is_published=True).annotate(
+            author_full_name=Concat(
+                F('author__first_name'), Value(' '),
+                F('author__last_name'), Value(' ('),
+                F('author__username'), Value(')'))).order_by('-id').select_related('category', 'author').prefetch_related('tags')[:10]
+        
+        serializer = RecipeSerializer(instance=recipes, many=True, context={'request': request}) 
 
-    return Response(serializer.data)
+        return Response(serializer.data)
+    
+    elif request.method == 'POST':
+        serializer = RecipeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True) # O raise_exception=True faz com que o serializer retorne um erro 400 se os dados não forem válidos.
+        serializer.save()
+        return Response(serializer.validated_data, status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'DELETE'])
 def recipe_api_detail(request, pk):

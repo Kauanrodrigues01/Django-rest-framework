@@ -2,6 +2,7 @@ from recipes.models import Recipe, Category
 from django.contrib.auth.models import User
 from tag.models import Tag
 from rest_framework import serializers
+from collections import defaultdict
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,7 +31,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'author', 'author_full_name', 'public', 'prepration', 'category_name', 'tags', 'tags_objects', 'tags_links']
     
     # Campos personalizados   
-    author_full_name = serializers.CharField(max_length=255)
+    author_full_name = serializers.CharField(max_length=255, read_only=True)
     public = serializers.BooleanField(
         source='is_published', 
         read_only=True
@@ -63,3 +64,25 @@ class RecipeSerializer(serializers.ModelSerializer):
         if obj.preparation_time == 1:
             return f'{obj.preparation_time} {obj.preparation_time_unit[:-1]}' # O método `[:-1]` remove o último caractere da string.
         return f'{obj.preparation_time} {obj.preparation_time_unit}'
+    
+    def validate(self, dados):
+        super_validate =  super().validate(dados)
+        
+        cd = dados
+        _my_erros = defaultdict(list)
+        title = cd.get('title')
+        description = cd.get('description')
+        
+        if title == description:
+            _my_erros['title'].append('O título não pode ser igual a descrição.')
+            _my_erros['description'].append('A descrição não pode ser igual ao título.')
+        
+        if _my_erros:
+            raise serializers.ValidationError(_my_erros)
+    
+    
+    def validade_title(self, value):
+        title = value
+        if len(title) < 10:
+            raise serializers.ValidationError('O título deve ter pelo menos 10 caracteres.')
+        return title
