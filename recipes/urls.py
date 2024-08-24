@@ -1,7 +1,16 @@
 from django.urls import path
 
 from recipes import views
+from rest_framework.routers import SimpleRouter
 app_name = 'recipes'
+
+# Tem sempre uma / no final das urls, para mudar isso, coloca o parametro `trailing_slash=False` na instancia do SimpleRouter
+recipe_api_v2_router = SimpleRouter()
+recipe_api_v2_router.register(
+    'recipes/api/v2',
+    views.api.RecipeAPIv2ViewSet,
+    basename='tag'
+)
 
 urlpatterns = [
     path(
@@ -49,17 +58,24 @@ urlpatterns = [
     
     path(
         'recipes/api/v2/',
-        views.api.recipe_api_list,
+        views.api.RecipeAPIv2ViewSet.as_view({
+            'get': 'list',
+            'post': 'create',
+        }), # chamando class based view
         name='recipes_api_v2',
     ),
     path(
         'recipes/api/v2/<int:pk>/',
-        views.api.recipe_api_detail,
+        views.api.RecipeAPIv2ViewSet.as_view({
+            'get': 'retrieve',
+            'patch': 'partial_update',
+            'delete': 'destroy',
+        }),
         name='recipes_api_v2_detail',
     ),
     path(
         'recipes/api/v2/tag/<int:pk>/',
-        views.api.tag_api_detail,
+        views.api.TagAPIv2Detail.as_view(),
         name='recipes_api_v2_tag',
     ),
 ]

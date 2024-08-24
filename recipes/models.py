@@ -87,7 +87,7 @@ class Recipe(models.Model):
             slug = f'{slugify(self.title)}'
             self.slug = slug
 
-        saved = super().save(*args, **kwargs)
+        saved = super().save(*args, **kwargs) # os *args e **kwargs são usados para passar argumentos e palavras-chave para a função pai.
 
         if self.cover:
             try:

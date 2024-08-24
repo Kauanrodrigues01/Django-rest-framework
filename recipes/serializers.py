@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from tag.models import Tag
 from rest_framework import serializers
 from collections import defaultdict
+from authors.validators import AuthorRecipeValidator # Validador de entrada de dados para o Recipe
+from django.core.exceptions import ValidationError
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,7 +30,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     # Campos do modelo Recipe
     class Meta:
         model = Recipe
-        fields = ['id', 'title', 'description', 'author', 'author_full_name', 'public', 'prepration', 'category_name', 'tags', 'tags_objects', 'tags_links']
+        fields = ['id', 'title', 'description', 'slug', 'author', 'author_full_name', 'public', 'prepration', 'category_name', 'tags', 'tags_objects', 'tags_links', 'preparation_time', 'preparation_time_unit', 'servings', 'servings_unit', 'preparation_steps', 'cover']
     
     # Campos personalizados   
     author_full_name = serializers.CharField(max_length=255, read_only=True)
@@ -52,7 +54,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     tags_links = serializers.HyperlinkedRelatedField(
         many=True,
         source='tags',
-        # queryset=Tag.objects.all(), # O queryset não é necessário, porque o campo é somente leitura.
         view_name='recipes:recipes_api_v2_tag',
         read_only=True
     )
@@ -66,23 +67,19 @@ class RecipeSerializer(serializers.ModelSerializer):
         return f'{obj.preparation_time} {obj.preparation_time_unit}'
     
     def validate(self, dados):
-        super_validate =  super().validate(dados)
+        '''
+        quando a view passa a instancia a gente tem acesso a ela usando self.instance
+        '''
+        # Se a instância existe e o campo 'servings' não for fornecido, Nos dados da atualização, ele paga o valor do servings da instância e atribui ao campo 'servings' dos dados.
+        if self.instance is not None and dados.get('servings') is None:
+            dados['servings'] = self.instance.servings
+            
+        if self.instance is not None and dados.get('preparation_time') is None:
+            dados['preparation_time'] = self.instance.preparation_time
         
-        cd = dados
-        _my_erros = defaultdict(list)
-        title = cd.get('title')
-        description = cd.get('description')
-        
-        if title == description:
-            _my_erros['title'].append('O título não pode ser igual a descrição.')
-            _my_erros['description'].append('A descrição não pode ser igual ao título.')
-        
-        if _my_erros:
-            raise serializers.ValidationError(_my_erros)
-    
-    
-    def validade_title(self, value):
-        title = value
-        if len(title) < 10:
-            raise serializers.ValidationError('O título deve ter pelo menos 10 caracteres.')
-        return title
+        super_validate = super().validate(dados)
+        AuthorRecipeValidator(
+            dados, 
+            ErrorClass=serializers.ValidationError
+        )
+        return super_validate # Retorna os dados validados.

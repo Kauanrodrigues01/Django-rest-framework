@@ -1,71 +1,69 @@
 from django.db.models.functions import Concat
 from django.db.models import F, Value
 from rest_framework.response import Response
-
-from rest_framework.decorators import api_view
+# from rest_framework.decorators import api_view
 from recipes.models import Recipe
 from tag.models import Tag
 from ..serializers import RecipeSerializer, TagSerializer
-from django.shortcuts import get_object_or_404
+# from django.shortcuts import get_object_or_404
 from rest_framework import status
+# from rest_framework.views import APIView
+from rest_framework.generics import RetrieveDestroyAPIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.viewsets import ModelViewSet
 
+class RecipeAPIv2Pagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
-@api_view(['GET', 'POST'])
-def recipe_api_list(request):
+class RecipeAPIv2ViewSet(ModelViewSet):
     '''
-    # `author_full_name` é um campo virtual criado ao concatenar os campos `author__first_name`, `author__last_name`, e `author__username` do modelo `Recipe`. Isso permite acessá-lo como um campo normal do modelo.
-
-    # Os `__` (dois underlines) são usados para acessar campos relacionados. Como `author` é uma chave estrangeira para o modelo `User`, `author__first_name` permite acessar o campo `first_name` do modelo `User` a partir do modelo `Recipe`.
-    
-    # `many=True`: Indica que estamos serializando vários objetos
-    
-    # `select_related('category', 'author')`: O método `select_related` é usado para carregar os objetos relacionados ao mesmo tempo que os objetos principais. Isso evita consultas adicionais ao banco de dados para carregar os objetos relacionados. Nesse caso, `category` e `author` são carregados ao mesmo tempo que os objetos `Recipe`. É útil quando você tem um relacionamento "foreign key" ou "one-to-one". 
-    ● Resumindo ele pega o Recipe, Category e Author em uma única consulta e passa para o serializer. Deixando o codigo mais rápido e eficiente.
-    
-    # `prefetch_related('tags')`: O método `prefetch_related` é usado para carregar objetos relacionados em uma consulta separada. Isso é útil quando você precisa carregar objetos relacionados que são muitos para muitos. Nesse caso, `tags` é carregado em uma consulta separada dos objetos `Recipe`. É útil para relacionamentos "many-to-many" ou "reverse foreign key"
-    
-    # `context={'request': request}`: Passa o objeto `request` para o serializer. Isso é útil para serializar campos que dependem do objeto `request`, como URLs absolutas. Como o HyperlinkedRelatedField, que usa o objeto `request` para criar URLs absolutas para os objetos relacionados.
+    Quando for personalizar metodos, tem que usar os nomes dos metodos que estão dentro dos mixins:
+    - list(get varios elementos)
+    - create(post)
+    - retrieve(get unico elemento)
+    - update(put)
+    - partial_update(patch)
     '''
-    if request.method == 'GET':
-        recipes = Recipe.objects.filter(is_published=True).annotate(
-            author_full_name=Concat(
-                F('author__first_name'), Value(' '),
-                F('author__last_name'), Value(' ('),
-                F('author__username'), Value(')'))).order_by('-id').select_related('category', 'author').prefetch_related('tags')[:10]
-        
-        serializer = RecipeSerializer(instance=recipes, many=True, context={'request': request}) 
-
-        return Response(serializer.data)
-    
-    elif request.method == 'POST':
-        serializer = RecipeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True) # O raise_exception=True faz com que o serializer retorne um erro 400 se os dados não forem válidos.
-        serializer.save()
-        return Response(serializer.validated_data, status=status.HTTP_201_CREATED)
-
-@api_view(['GET', 'DELETE'])
-def recipe_api_detail(request, pk):
-    '''
-    # `get_object_or_404` busca um objeto `Recipe` com a chave primária (`pk`) correspondente. Se o objeto não for encontrado, retorna um erro 404. Isso é melhor do que `filter(pk=pk)`, que poderia retornar um objeto vazio e causar erros no código.
-
-    # `author_full_name` é criado da mesma forma que na função `recipe_api_list`.
-    
-    # `many=False`: Indica que estamos serializando um único objeto.
-    '''
-    recipe = get_object_or_404(
-        Recipe.objects.filter(is_published=True).annotate(
+    queryset = Recipe.objects.filter(is_published=True).annotate(
         author_full_name=Concat(
             F('author__first_name'), Value(' '),
             F('author__last_name'), Value(' ('),
-            F('author__username'), Value(')'))).select_related('category', 'author').prefetch_related('tags'), 
-        pk=pk)
+            F('author__username'), Value(')'),
+        )).order_by('-id').select_related('category', 'author').prefetch_related('tags')
+    serializer_class = RecipeSerializer
+    pagination_class = RecipeAPIv2Pagination
     
-    serializer = RecipeSerializer(instance=recipe, many=False, context={'request': request}) 
+    def partial_update(self, request, *args, **kwargs):
+        '''
+        ## Kwargs é um dicionário que contém os argumentos passados para a view. Que são passados na URL.
+        
+        # queryset() é um método que retorna a queryset da view.
+        '''
+        pk = kwargs.get('pk')
+        
+        recipe = self.queryset().filter(pk=pk).first()
+        serializer = RecipeSerializer(
+            instance=recipe, 
+            data=request.data, 
+            partial=True, 
+            many=False
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+ 
+class TagAPIv2Detail(RetrieveDestroyAPIView):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
 
-    return Response(serializer.data)
+    # Exemplos de métodos que podem ser sobrescritos(personalizados)
+    # def get_queryset(self):
+    #     user = self.request.user
+    #     return Tag.objects.filter(created_by=user)
 
-@api_view(['GET'])
-def tag_api_detail(request, pk):
-    tag = get_object_or_404(Tag.objects.all(), pk=pk)
-    serializer = TagSerializer(instance=tag, many=False)
-    return Response(serializer.data)
+    def delete(self, request, *args, **kwargs):
+        tag = self.get_object()
+        self.perform_destroy(tag)
+        return Response({"detail": "Tag excluída com sucesso."}, status=status.HTTP_204_NO_CONTENT)

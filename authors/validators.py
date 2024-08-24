@@ -8,10 +8,10 @@ from utils.strings import is_positive_number
 
 
 class AuthorRecipeValidator:
-    def __init__(self, data, erros=None, ErrorClass=None):
+    def __init__(self, dados, erros=None, ErrorClass=None):
         self.errors = defaultdict(list) if erros is None else erros
         self.ErrorClass = ValidationError if ErrorClass is None else ErrorClass
-        self.data = data
+        self.dados = dados
         self.clean()
 
     def clean(self, *args, **kwargs):
@@ -19,7 +19,7 @@ class AuthorRecipeValidator:
         self.clean_servings()
         self.clean_preparation_time()
         
-        cd = self.data
+        cd = self.dados
 
         title = cd.get('title')
         description = cd.get('description')
@@ -33,27 +33,22 @@ class AuthorRecipeValidator:
 
 
     def clean_title(self):
-        title = self.data.get('title')
+        title = self.dados.get('title')
 
         if len(title) < 5:
             self.errors['title'].append('Must have at least 5 chars.')
 
-        return title
 
     def clean_preparation_time(self):
         field_name = 'preparation_time'
-        field_value = self.data.get(field_name)
+        field_value = self.dados.get(field_name)
 
         if not is_positive_number(field_value):
             self.errors[field_name].append('Must be a positive number')
-
-        return field_value
 
     def clean_servings(self):
         field_name = 'servings'
-        field_value = self.data.get(field_name)
+        field_value = self.dados.get(field_name)
 
         if not is_positive_number(field_value):
             self.errors[field_name].append('Must be a positive number')
-
-        return field_value
