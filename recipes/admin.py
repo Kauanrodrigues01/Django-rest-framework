@@ -2,9 +2,9 @@ from django.contrib import admin
 
 from .models import Category, Recipe
 
-
 class CategoryAdmin(admin.ModelAdmin):
-    ...
+    list_display = ['id', 'name']
+    list_display_links = 'id', 'name',
 
 
 @admin.register(Recipe)

@@ -1,16 +1,23 @@
-from django.urls import path
+from django.urls import path, include
 
 from recipes import views
 from rest_framework.routers import SimpleRouter
 app_name = 'recipes'
 
-# Tem sempre uma / no final das urls, para mudar isso, coloca o parametro `trailing_slash=False` na instancia do SimpleRouter
+'''
+# No caso o simpleRouter cria DUAS ROTAS:
+
+# recipes:recipes-api-list -> recipes/api/v2/ -> Mostra todos os elementos
+
+# recipes:recipes-api-detail -> recipes/api/v2/<int:pk>/ -> Mostra um elemento especifico
+'''
 recipe_api_v2_router = SimpleRouter()
 recipe_api_v2_router.register(
     'recipes/api/v2',
     views.api.RecipeAPIv2ViewSet,
-    basename='tag'
+    basename='recipes-api' # Muda o nome base da rotas list e detail
 )
+print(recipe_api_v2_router.urls) # Aqui dá para ver as rotas criadas
 
 urlpatterns = [
     path(
@@ -55,27 +62,10 @@ urlpatterns = [
     ),
     
     # Django REST Framework
-    
-    path(
-        'recipes/api/v2/',
-        views.api.RecipeAPIv2ViewSet.as_view({
-            'get': 'list',
-            'post': 'create',
-        }), # chamando class based view
-        name='recipes_api_v2',
-    ),
-    path(
-        'recipes/api/v2/<int:pk>/',
-        views.api.RecipeAPIv2ViewSet.as_view({
-            'get': 'retrieve',
-            'patch': 'partial_update',
-            'delete': 'destroy',
-        }),
-        name='recipes_api_v2_detail',
-    ),
     path(
         'recipes/api/v2/tag/<int:pk>/',
         views.api.TagAPIv2Detail.as_view(),
         name='recipes_api_v2_tag',
     ),
+    path('', include(recipe_api_v2_router.urls)),
 ]

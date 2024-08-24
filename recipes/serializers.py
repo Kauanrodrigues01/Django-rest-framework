@@ -30,13 +30,12 @@ class RecipeSerializer(serializers.ModelSerializer):
     # Campos do modelo Recipe
     class Meta:
         model = Recipe
-        fields = ['id', 'title', 'description', 'slug', 'author', 'author_full_name', 'public', 'prepration', 'category_name', 'tags', 'tags_objects', 'tags_links', 'preparation_time', 'preparation_time_unit', 'servings', 'servings_unit', 'preparation_steps', 'cover']
+        fields = ['id', 'title', 'description', 'slug', 'author', 'author_full_name', 'public', 'prepration', 'category','category_name', 'tags', 'tags_objects', 'tags_links', 'preparation_time', 'preparation_time_unit', 'servings', 'servings_unit', 'preparation_steps', 'cover']
     
     # Campos personalizados   
     author_full_name = serializers.CharField(max_length=255, read_only=True)
     public = serializers.BooleanField(
-        source='is_published', 
-        read_only=True
+        source='is_published'
     )
     prepration = serializers.SerializerMethodField(
         method_name='preparation_method', 

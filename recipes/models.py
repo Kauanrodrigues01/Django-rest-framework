@@ -51,10 +51,10 @@ class Recipe(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, blank=True,
         default=None,
-    )
+    ) # Category é uma chave estrangeira, o id da categoria é armazenado no campo category_id
     author = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True
-    )
+    ) # Category é uma chave estrangeira, o id da categoria é armazenado no campo category_id
     tags = models.ManyToManyField(Tag, blank=True, default='')
 
     def __str__(self):
