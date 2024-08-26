@@ -1,24 +1,21 @@
 from django.urls import path, include
-
-from recipes import views
 from rest_framework.routers import SimpleRouter
+from recipes import views
 from rest_framework_simplejwt.views import (TokenObtainPairView, TokenRefreshView, TokenVerifyView)
+
 app_name = 'recipes'
 
-'''
-# No caso o simpleRouter cria DUAS ROTAS:
-
-# recipes:recipes-api-list -> recipes/api/v2/ -> Mostra todos os elementos
-
-# recipes:recipes-api-detail -> recipes/api/v2/<int:pk>/ -> Mostra um elemento especifico
-'''
 recipe_api_v2_router = SimpleRouter()
 recipe_api_v2_router.register(
     'recipes/api/v2',
     views.api.RecipeAPIv2ViewSet,
-    basename='recipes-api' # Muda o nome base da rotas list e detail
+    basename='recipes-api'
 )
-print(recipe_api_v2_router.urls) # Aqui dá para ver as rotas criadas
+recipe_api_v2_router.register(
+    'recipes/api/v2/tag',
+    views.api.TagAPIv2ViewSet,  # Registra o viewset de tags
+    basename='tags'
+)
 
 urlpatterns = [
     path(
@@ -79,11 +76,6 @@ urlpatterns = [
         name='token_verify'
     ),
     
-    # Por ultimo
-    path(
-        'recipes/api/v2/tag/<int:pk>/',
-        views.api.TagAPIv2Detail.as_view(),
-        name='recipes_api_v2_tag',
-    ),
+    # Incluir as rotas do SimpleRouter
     path('', include(recipe_api_v2_router.urls)),
 ]

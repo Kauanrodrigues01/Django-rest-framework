@@ -6,6 +6,11 @@ from collections import defaultdict
 from authors.validators import AuthorRecipeValidator # Validador de entrada de dados para o Recipe
 from django.core.exceptions import ValidationError
 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
@@ -53,7 +58,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     tags_links = serializers.HyperlinkedRelatedField(
         many=True,
         source='tags',
-        view_name='recipes:recipes_api_v2_tag',
+        view_name='recipes:tags-detail',
         read_only=True
     )
     
