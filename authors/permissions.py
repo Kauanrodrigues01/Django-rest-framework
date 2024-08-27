@@ -16,7 +16,6 @@ class NotAuthenticated(BasePermission):
     """
     Permissão personalizada que permite o acesso apenas se o usuário não estiver autenticado.
     """
-    
     def has_permission(self, request, view):
         # Permite acesso apenas se o usuário não estiver autenticado
         return not request.user.is_authenticated
