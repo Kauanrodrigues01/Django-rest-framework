@@ -10,9 +10,7 @@ from rest_framework import status
 from rest_framework.generics import RetrieveDestroyAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import ModelViewSet
-# Permissions Prontas
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny, IsAdminUser
-# Permissions Personalizadas
 from ..permissions import IsOwnerOrReadOnly
 
 class RecipeAPIv2Pagination(PageNumberPagination):
