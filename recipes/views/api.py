@@ -16,8 +16,7 @@ from ..permissions import IsOwnerOrReadOnly
 class RecipeAPIv2Pagination(PageNumberPagination):
     page_size = 50
     page_size_query_param = 'page_size'
-    max_page_size = 100
-    
+    max_page_size = 100 
 
 class RecipeAPIv2ViewSet(ModelViewSet):
     '''
@@ -63,9 +62,9 @@ class RecipeAPIv2ViewSet(ModelViewSet):
         '''
         qs = super().get_queryset() # Pega a queryset definida na view
        
-        category_id = self.request.query_params.get('category_id') # Pega o parametro category_id da Query String
+        category_id = self.request.query_params.get('category_id') # https//127.0.0.1:5000/recipes/api/v2/?category_id=1
         author_id = self.request.query_params.get('author_id') 
-        tags_ids = self.request.query_params.getlist('tags_ids') 
+        tags_ids = self.request.query_params.getlist('tags_ids') # https//127.0.0.1:5000/recipes/api/v2/?tags_ids=1&tags_ids=2&tags_ids=3
         if category_id is not None:
             if category_id.isdigit():
                 qs = qs.filter(category_id=category_id)
@@ -77,7 +76,7 @@ class RecipeAPIv2ViewSet(ModelViewSet):
             else:
                 raise ValidationError('O parâmetro author_id deve ser um número inteiro.')
         if tags_ids:
-            if all(tag_id.isdigit() for tag_id in tags_ids):
+            if all(tag_id.isdigit() for tag_id in tags_ids): # o metodo all verifica se todos os elementos da lista são verdadeiros
                 qs = qs.filter(tags__id__in=tags_ids) # Acessa o relacionamento tags e filtra os elementos que tem o id na lista tags_ids, tags__id acessa o campo da tabela de tags e __in verifica se o valor está na lista
             else:
                 raise ValidationError('Os parâmetros tags_ids devem ser números inteiros.')
@@ -116,8 +115,8 @@ class RecipeAPIv2ViewSet(ModelViewSet):
         serializer = RecipeSerializer(
             instance=recipe, 
             data=request.data, 
-            partial=True, 
-            many=False
+            partial=True,
+            many=False,
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -141,13 +140,13 @@ class TagAPIv2ViewSet(ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ['get', 'delete', 'patch']
+    http_method_names = ['get', 'delete', 'patch', 'post']
     
     def get_permissions(self):
         """
         Define permissões com base no método HTTP da requisição.
         """
-        if self.request.method in ['PATCH', 'DELETE']:
+        if self.request.method in ['PATCH', 'DELETE', 'POST']:
             return [IsAdminUser()]  # Somente admins podem alterar ou excluir tags
         if self.request.method == 'GET':
             return [AllowAny()]  # Todos podem visualizar tags
@@ -170,4 +169,4 @@ class TagAPIv2ViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
-    
+

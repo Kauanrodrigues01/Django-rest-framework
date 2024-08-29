@@ -14,7 +14,7 @@ recipe_api_v2_router.register(
 recipe_api_v2_router.register(
     'recipes/api/v2/tag',
     views.api.TagAPIv2ViewSet,  # Registra o viewset de tags
-    basename='tags'
+    basename='tags' 
 )
 
 urlpatterns = [

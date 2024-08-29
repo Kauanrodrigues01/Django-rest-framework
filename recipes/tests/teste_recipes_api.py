@@ -4,7 +4,7 @@ from django.urls import reverse
 # o reverse é uma função que retorna a URL de uma view a partir do nome da URL
 
 class RecipeAPIv2Test(test.APITestCase, RecipeMixin):
-    def test_recipe_api_list_returns_code_200(self):
+    def test_recipe_api_list_returns_status_code_200(self):
         '''
         O reverse é uma função que retorna a URL de uma view a partir do nome da URL definida no arquivo de urls.py.
         
@@ -27,5 +27,5 @@ class RecipeAPIv2Test(test.APITestCase, RecipeMixin):
         # self.assertEqual(response.data['count'], 1) verifica se a API retornou uma receita.
         '''
         wanted_recipes = 7
-        self.client.get(reverse('recipes:recipe-api-list'))
-        self.assertEqual(wanted_recipes, 7)
+        response = self.client.get(reverse('recipes:recipe-api-list'))
+        print(response.data)

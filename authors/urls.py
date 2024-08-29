@@ -40,6 +40,13 @@ urlpatterns = [
         views.ProfileView.as_view(),
         name='profile'
     ),
+    # Rest Framework
+    # path('api/', views.AuthorViewSet.as_view({
+    #     'get': 'list',
+    #     'post': 'create',
+    #     'patch': 'partial_update',
+    #     'delete': 'destroy',
+    #     }), name='author-api'),
 ]
 
 urlpatterns += author_api_router.urls
